@@ -25,7 +25,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
-import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,9 +38,9 @@ public class OpWalkAMileInTheseLouisVuittons implements SpellAction
     public int getArgc() { return 2; }
 
     @Override
-    public @NotNull SpellAction.Result executeWithUserdata(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env, @NotNull CompoundTag tags)
+    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env)
     {
-        ServerPlayer target = OperatorUtils.getPlayer(args, 0, getArgc());
+        ServerPlayer target = OperatorUtils.getPlayer(args, env.getWorld(), 0, getArgc());
         if(!env.isEntityInRange(target))
             JavaMishapThrower.throwMishap(new MishapEntityTooFarAway(target));
         Entity caster = env.getCastingEntity();
@@ -61,11 +60,6 @@ public class OpWalkAMileInTheseLouisVuittons implements SpellAction
     public boolean hasCastingSound(@NotNull CastingEnvironment castingEnvironment) { return true; }
     @Override
     public boolean awardsCastingStat(@NotNull CastingEnvironment castingEnvironment) { return true; }
-    @Override
-    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> list, @NotNull CastingEnvironment castingEnvironment)
-    {
-        throw new IllegalStateException();
-    }
 
     private class Spell implements RenderedSpell
     {
@@ -102,9 +96,4 @@ public class OpWalkAMileInTheseLouisVuittons implements SpellAction
     }
 
 
-    @Override
-    public @NotNull OperationResult operate(@NotNull CastingEnvironment castingEnvironment, @NotNull CastingImage castingImage, @NotNull SpellContinuation spellContinuation)
-    {
-        return SpellAction.DefaultImpls.operate(this, castingEnvironment, castingImage, spellContinuation);
-    }
 }

@@ -1,6 +1,5 @@
 package abilliontrillionstars.movesthemind.casting;
 
-import abilliontrillionstars.movesthemind.Movesthemind;
 import net.minecraft.server.level.ServerPlayer;
 
 public class FakeplayerUtils
@@ -27,8 +26,7 @@ public class FakeplayerUtils
 
     public static String getUsernameString(ServerPlayer player)
     {
-        String compName = player.getName().toString();
-        compName = compName.substring(compName.indexOf('{')+1, compName.length()-1);
-        return compName;
+        // 1.21: Component.toString() is no longer a parseable '{name}' literal; the profile name is the username.
+        return player.getGameProfile().getName();
     }
 }

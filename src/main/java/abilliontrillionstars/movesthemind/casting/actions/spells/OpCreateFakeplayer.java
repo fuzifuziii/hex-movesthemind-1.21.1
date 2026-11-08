@@ -17,7 +17,7 @@ import at.petrak.hexcasting.api.casting.mishaps.MishapBadLocation;
 import at.petrak.hexcasting.api.casting.mishaps.MishapOthersName;
 import at.petrak.hexcasting.api.misc.MediaConstants;
 import carpet.patches.EntityPlayerMPFake;
-import net.fabricmc.loader.api.FabricLoader;
+import net.neoforged.fml.ModList;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -37,7 +37,7 @@ public class OpCreateFakeplayer implements SpellAction
     public int getArgc() { return 1; }
 
     @Override
-    public @NotNull SpellAction.Result executeWithUserdata(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env, @NotNull CompoundTag tags)
+    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env)
     {
         Vec3 pos = OperatorUtils.getVec3(args, 0, getArgc());
         // ambit check
@@ -68,11 +68,6 @@ public class OpCreateFakeplayer implements SpellAction
     public boolean hasCastingSound(@NotNull CastingEnvironment castingEnvironment) { return true; }
     @Override
     public boolean awardsCastingStat(@NotNull CastingEnvironment castingEnvironment) { return true; }
-    @Override
-    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> list, @NotNull CastingEnvironment castingEnvironment)
-    {
-        throw new IllegalStateException();
-    }
 
     private class Spell implements RenderedSpell
     {
@@ -85,23 +80,22 @@ public class OpCreateFakeplayer implements SpellAction
         {
             MinecraftServer server = env.getWorld().getServer();
             CommandSourceStack sourceStack = server.createCommandSourceStack();
-            String dim = env.getWorld().dimension().toString();
-            dim = dim.substring(dim.lastIndexOf(' ')+1, dim.indexOf(']'));
+            String dim = env.getWorld().dimension().location().toString();
             String gamemode;
-            if(env.getCaster().gameMode.isCreative())
+            if(env.getCastingEntity() instanceof ServerPlayer sp && sp.isCreative())
                 gamemode = "creative";
             else gamemode = "survival";
             server.getCommands().performPrefixedCommand(sourceStack, "player " + name + " spawn at " + pos.x + " " + pos.y + " " + pos.z
                     + " facing 0 0 in "+dim+" in "+gamemode);
             // set the origin of a player if it's installed (now suppressed from logs)
-            if(FabricLoader.getInstance().isModLoaded("origins"))
+            if(ModList.get().isLoaded("origins"))
                 server.getCommands().performPrefixedCommand(sourceStack.withSuppressedOutput(), "origin set "+name+" origins:origin origins:human");
             // do the same for other lesser origins mods (thanks ashdew-derg!)
-            if(FabricLoader.getInstance().isModLoaded("tinkerers_statures"))
+            if(ModList.get().isLoaded("tinkerers_statures"))
                 server.getCommands().performPrefixedCommand(sourceStack.withSuppressedOutput(), "origin set "+name+" origins:stature tinkerer:unaffected");
-            if(FabricLoader.getInstance().isModLoaded("origins-classes"))
+            if(ModList.get().isLoaded("origins-classes"))
                 server.getCommands().performPrefixedCommand(sourceStack.withSuppressedOutput(), "origin set "+name+" origins-classes:class origins-classes:nitwit");
-            if(FabricLoader.getInstance().isModLoaded("aspects"))
+            if(ModList.get().isLoaded("aspects"))
             {
                 server.getCommands().performPrefixedCommand(sourceStack.withSuppressedOutput(), "origin set "+name+" aspects:elements aspects:vacuos");
                 server.getCommands().performPrefixedCommand(sourceStack.withSuppressedOutput(), "origin set "+name+" aspects:origins aspects:imp");
@@ -116,9 +110,4 @@ public class OpCreateFakeplayer implements SpellAction
     }
 
 
-    @Override
-    public @NotNull OperationResult operate(@NotNull CastingEnvironment castingEnvironment, @NotNull CastingImage castingImage, @NotNull SpellContinuation spellContinuation)
-    {
-        return SpellAction.DefaultImpls.operate(this, castingEnvironment, castingImage, spellContinuation);
-    }
 }

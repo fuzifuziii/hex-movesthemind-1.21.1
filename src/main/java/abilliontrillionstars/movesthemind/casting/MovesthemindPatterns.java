@@ -7,20 +7,18 @@ import at.petrak.hexcasting.api.casting.castables.Action;
 import at.petrak.hexcasting.api.casting.castables.OperationAction;
 import at.petrak.hexcasting.api.casting.math.HexDir;
 import at.petrak.hexcasting.api.casting.math.HexPattern;
-import at.petrak.hexcasting.common.lib.hex.HexActions;
-import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 public class MovesthemindPatterns
 {
     private static final Map<ResourceLocation, ActionRegistryEntry> PATTERNS = new LinkedHashMap<>();
 
-    public static void register() {
-        for (Map.Entry<ResourceLocation, ActionRegistryEntry> entry : PATTERNS.entrySet())
-            Registry.register(HexActions.REGISTRY, entry.getKey(), entry.getValue());
+    public static void register(BiConsumer<ActionRegistryEntry, ResourceLocation> r) {
+        PATTERNS.forEach((id, entry) -> r.accept(entry, id));
     }
 
     public static final HexPattern CREATE = make("edeaqqwwawwqq", HexDir.NORTH_WEST, "create", OpCreateFakeplayer.INSTANCE);
@@ -43,16 +41,17 @@ public class MovesthemindPatterns
 
 
     private static HexPattern make(String signature, HexDir dir, String name, Action act ) {
+        HexPattern pattern = HexPattern.fromAngleString(signature, dir);
         PATTERNS.put(
-                new ResourceLocation(Movesthemind.MOD_ID, name),
-                new ActionRegistryEntry(HexPattern.fromAngles(signature, dir), act)
+                ResourceLocation.fromNamespaceAndPath(Movesthemind.MOD_ID, name),
+                new ActionRegistryEntry(pattern, act)
         );
-        return HexPattern.fromAngles(signature, dir);
+        return pattern;
     }
     private static HexPattern make(String signature, HexDir dir, String name) {
-        HexPattern pattern = HexPattern.fromAngles(signature, dir);
+        HexPattern pattern = HexPattern.fromAngleString(signature, dir);
         PATTERNS.put(
-                new ResourceLocation(Movesthemind.MOD_ID, name),
+                ResourceLocation.fromNamespaceAndPath(Movesthemind.MOD_ID, name),
                 new ActionRegistryEntry(pattern, new OperationAction(pattern))
         );
         return pattern;

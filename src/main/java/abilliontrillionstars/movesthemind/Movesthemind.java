@@ -1,26 +1,24 @@
 package abilliontrillionstars.movesthemind;
 
 import abilliontrillionstars.movesthemind.casting.MovesthemindPatterns;
-import net.fabricmc.api.ModInitializer;
-
+import at.petrak.hexcasting.common.lib.HexRegistries;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.registries.RegisterEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class Movesthemind implements ModInitializer {
-	public static final String MOD_ID = "movesthemind";
+@Mod(Movesthemind.MOD_ID)
+public class Movesthemind {
+    public static final String MOD_ID = "movesthemind";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	// This logger is used to write text to the console and the log file.
-	// It is considered best practice to use your mod id as the logger's name.
-	// That way, it's clear which mod wrote info, warnings, and errors.
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
-	@Override
-	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
-		MovesthemindPatterns.register();
-
-		LOGGER.info("Hello Fabric world!");
-	}
+    public Movesthemind(IEventBus modBus, ModContainer container) {
+        // 1.21 / Hex 0.12: actions live in the hexcasting:action registry, flushed from a RegisterEvent.
+        modBus.addListener((RegisterEvent event) ->
+            event.register(HexRegistries.ACTION, helper ->
+                MovesthemindPatterns.register((entry, id) -> helper.register(id, entry))));
+        LOGGER.info("Hello NeoForge world!");
+    }
 }

@@ -1,16 +1,15 @@
 pluginManagement {
-	repositories {
-		maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
-		}
-		mavenCentral()
-		gradlePluginPortal()
-	}
+    repositories {
+        gradlePluginPortal()
+        maven { url = uri("https://maven.blamejared.com/") }
+    }
     plugins {
-        id 'org.jetbrains.kotlin.jvm' version '2.0.21'
+        id 'org.jetbrains.kotlin.jvm' version '2.3.21'
     }
 }
+
 plugins {
-    id 'org.gradle.toolchains.foojay-resolver-convention' version '0.8.0'
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
 }
+
+rootProject.name = 'movesthemind'

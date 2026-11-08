@@ -1,129 +1,125 @@
 plugins {
-	id("fabric-loom") version "1.10-SNAPSHOT"
-	id("maven-publish")
+    id 'java-library'
+    id 'maven-publish'
+    id 'net.neoforged.moddev' version '2.0.141'
+    id 'idea'
     id 'org.jetbrains.kotlin.jvm'
 }
 
-version = project.mod_version
-group = project.maven_group
+version = mod_version
+group = mod_group_id
 
 base {
-	archivesName = project.archives_base_name
+    archivesName = mod_id
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+kotlin {
+    jvmToolchain(21)
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-
-	mavenCentral()
-	gradlePluginPortal()
-	maven { url = uri("https://jitpack.io") }
-	maven { url = uri("https://maven.blamejared.com") }
-	maven { url = uri("https://maven.fabricmc.net/") }
-	maven { url = uri("https://maven.ladysnake.org/releases") } // Cardinal Components
-	maven { url = uri("https://maven.parchmentmc.org") }
-	maven { url = uri("https://maven.shedaniel.me") }
-	maven { url = uri("https://maven.terraformersmc.com/releases") }
-
-	// add the modrinth maven!
-	exclusiveContent {
-		forRepository {
-			maven {
-				name = "Modrinth"
-				url = "https://api.modrinth.com/maven"
-			}
-		}
-		filter {includeGroup "maven.modrinth"}
-	}
-	exclusiveContent {
-		filter {includeGroup("libs")}
-		forRepository { flatDir{dir(rootProject.file("libs"))} }
-	}
+    maven {
+        name = "BlameJared Maven"
+        url = "https://maven.blamejared.com"
+    }
+    maven {
+        name = "ParchmentMC Maven"
+        url = "https://maven.parchmentmc.org"
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Kotlin for Forge'
+                url = 'https://thedarkcolour.github.io/KotlinForForge/'
+            }
+        }
+        filter {
+            includeGroup "thedarkcolour"
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            flatDir {
+                dirs "libs"
+            }
+        }
+        filter {
+            includeGroup "libs"
+        }
+    }
+    mavenCentral()
 }
 
-loom {
-	splitEnvironmentSourceSets()
+neoForge {
+    version = project.neo_version
 
-	mods {
-		"movesthemind" {
-			sourceSet(sourceSets.main)
-			sourceSet(sourceSets.client)
-		}
-	}
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
 
+    runs {
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet(sourceSets.main)
+        }
+    }
 }
 
-fabricApi { configureDataGeneration {client = true} }
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
+}
 
 dependencies {
-	minecraft("com.mojang:minecraft:${project.minecraft_version}")
-	mappings(loom.officialMojangMappings())
-
-	modApi(libs.fabric.api)
-	modImplementation(libs.fabric.loader)
-
-	// first time putting in a dependency!
-	modApi(libs.fabric.carpet)
-
-	modApi(libs.hexcasting.fabric) {exclude(module: "phosphor")} // If not excluded here, calls a nonexistent method and crashes the dev client
-	// Hex Casting dependencies
-	// we use modLocalRuntime to add these to the development runtime, but not at compile time or for consumers of this project
-	modLocalRuntime(libs.paucal.fabric)
-	modLocalRuntime(libs.patchouli.fabric)
-	modLocalRuntime(libs.cardinalComponents)
-	modLocalRuntime(libs.serializationHooks)
-	modLocalRuntime(libs.trinkets)
-	modLocalRuntime(libs.inline.fabric) { transitive = false }
-	modApi(libs.clothConfig.fabric) {exclude(group: "net.fabricmc.fabric-api") }
-	modImplementation(libs.modMenu)
-
-	modImplementation(libs.kotlin.fabric)
+    implementation("libs:hexcasting-neoforge-$minecraft_version:$hexcasting_version")
+    implementation("libs:paucal:$paucal_version+$minecraft_version-neoforge")
+    implementation("libs:neoforge-carpet-1.21.1:1.0.8+v251027")
+    implementation("vazkii.patchouli:Patchouli:$minecraft_version-$patchouli_version-NEOFORGE")
+    implementation("thedarkcolour:kotlinforforge-neoforge:$kff_version")
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
-processResources {
-	inputs.property("version", project.version)
-	filesMatching("fabric.mod.json") {expand("version": inputs.properties.version)}
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+    ]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xmaxerrs', '10000']
 }
 
-tasks.withType(JavaCompile).configureEach {it.options.release = 17}
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-
-}
-
-jar {
-	inputs.property("archivesName", project.base.archivesName)
-
-	from("LICENSE") {
-		rename({ "${it}_${inputs.properties.archivesName}"})
-	}
-}
-
-// configure the maven publication
 publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
-			from(components.java)
-		}
-	}
-
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
-}
-kotlin {
-    jvmToolchain(17)
+    publications {
+        register('mavenJava', MavenPublication) {
+            from components.java
+        }
+    }
 }

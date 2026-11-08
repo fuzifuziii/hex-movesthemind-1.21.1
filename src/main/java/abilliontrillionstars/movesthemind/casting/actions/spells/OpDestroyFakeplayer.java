@@ -33,9 +33,9 @@ public class OpDestroyFakeplayer implements SpellAction
     public int getArgc() { return 1; }
 
     @Override
-    public @NotNull SpellAction.Result executeWithUserdata(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env, @NotNull CompoundTag tags)
+    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env)
     {
-        ServerPlayer player = OperatorUtils.getPlayer(args, 0, getArgc());
+        ServerPlayer player = OperatorUtils.getPlayer(args, env.getWorld(), 0, getArgc());
         if(!env.isEntityInRange(player))
             JavaMishapThrower.throwMishap(new MishapEntityTooFarAway(player));
         Entity caster = env.getCastingEntity();
@@ -63,11 +63,6 @@ public class OpDestroyFakeplayer implements SpellAction
     public boolean hasCastingSound(@NotNull CastingEnvironment castingEnvironment) { return true; }
     @Override
     public boolean awardsCastingStat(@NotNull CastingEnvironment castingEnvironment) { return true; }
-    @Override
-    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> list, @NotNull CastingEnvironment castingEnvironment)
-    {
-        throw new IllegalStateException();
-    }
 
     private class Spell implements RenderedSpell
     {
@@ -91,9 +86,4 @@ public class OpDestroyFakeplayer implements SpellAction
     }
 
 
-    @Override
-    public @NotNull OperationResult operate(@NotNull CastingEnvironment castingEnvironment, @NotNull CastingImage castingImage, @NotNull SpellContinuation spellContinuation)
-    {
-        return SpellAction.DefaultImpls.operate(this, castingEnvironment, castingImage, spellContinuation);
-    }
 }

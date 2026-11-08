@@ -24,7 +24,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.core.jmx.Server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +31,6 @@ import java.util.List;
 
 import static java.lang.Math.asin;
 import static java.lang.Math.atan2;
-import static org.spongepowered.asm.mixin.injection.selectors.ElementNode.listOf;
 
 public class OpMadeYouLook implements SpellAction
 {
@@ -42,9 +40,9 @@ public class OpMadeYouLook implements SpellAction
     public int getArgc() { return 2; }
 
     @Override
-    public @NotNull Result executeWithUserdata(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env, @NotNull CompoundTag tags)
+    public @NotNull SpellAction.Result execute(@NotNull List<? extends Iota> args, @NotNull CastingEnvironment env)
     {
-        ServerPlayer target = OperatorUtils.getPlayer(args, 0, getArgc());
+        ServerPlayer target = OperatorUtils.getPlayer(args, env.getWorld(), 0, getArgc());
         if(!env.isEntityInRange(target))
             JavaMishapThrower.throwMishap(new MishapEntityTooFarAway(target));
         Entity caster = env.getCastingEntity();
@@ -65,11 +63,6 @@ public class OpMadeYouLook implements SpellAction
     public boolean awardsCastingStat(@NotNull CastingEnvironment castingEnvironment) { return true; }
 
 
-    @Override
-    public @NotNull Result execute(@NotNull List<? extends Iota> list, @NotNull CastingEnvironment castingEnvironment)
-    {
-        throw new IllegalStateException();
-    }
 
     private class Spell implements RenderedSpell
     {
@@ -96,9 +89,4 @@ public class OpMadeYouLook implements SpellAction
     }
 
 
-    @Override
-    public @NotNull OperationResult operate(@NotNull CastingEnvironment castingEnvironment, @NotNull CastingImage castingImage, @NotNull SpellContinuation spellContinuation)
-    {
-        return SpellAction.DefaultImpls.operate(this, castingEnvironment, castingImage, spellContinuation);
-    }
 }
